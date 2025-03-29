@@ -1,0 +1,17 @@
+{
+  "name": "tourze/symfony-cache-hotkey-bundle",
+  "description": "自动扩展Cache服务",
+  "type": "symfony-bundle",
+  "license": "MIT",
+  "require": {
+    "php": "^8.1",
+    "psr/log": "^3|^2|^1",
+    "symfony/cache": "^6.4",
+    "symfony/framework-bundle": "^6.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Tourze\\Symfony\\CacheHotKey\\": "src"
+    }
+  }
+}
