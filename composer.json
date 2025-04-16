@@ -15,6 +15,7 @@
     "symfony/cache-contracts": "^3",
     "symfony/http-kernel": "^6.4",
     "symfony/framework-bundle": "^6.4",
+    "symfony/service-contracts": "^2.5 || ^3",
     "tourze/backtrace-helper": "~0.0.5"
   },
   "autoload": {
