@@ -23,6 +23,11 @@
       "Tourze\\Symfony\\CacheHotKey\\": "src"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Tourze\\Symfony\\CacheHotKey\\Tests\\": "tests"
+    }
+  },
   "require-dev": {
     "phpunit/phpunit": "^10.0",
     "phpstan/phpstan": "^2.1"
