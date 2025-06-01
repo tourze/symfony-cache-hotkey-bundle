@@ -9,121 +9,213 @@ use Symfony\Component\Cache\Marshaller\MarshallerInterface;
 use Symfony\Contracts\Service\ResetInterface;
 use Tourze\Symfony\CacheHotKey\Service\CacheMarshaller;
 
+interface ResettableMarshallerMock extends MarshallerInterface, ResetInterface
+{
+}
+
 class CacheMarshallerTest extends TestCase
 {
-    private MarshallerInterface $innerMarshallerMock;
-    private LoggerInterface $loggerMock;
-    private CacheMarshaller $cacheMarshaller;
+    /** @var MarshallerInterface&MockObject */
+    private $innerMock;
+
+    /** @var LoggerInterface&MockObject */
+    private $loggerMock;
+
+    private CacheMarshaller $marshaller;
 
     protected function setUp(): void
     {
-        $this->innerMarshallerMock = $this->createMock(MarshallerInterface::class);
+        $this->innerMock = $this->createMock(MarshallerInterface::class);
         $this->loggerMock = $this->createMock(LoggerInterface::class);
-        $this->cacheMarshaller = new CacheMarshaller($this->innerMarshallerMock, $this->loggerMock);
+        $this->marshaller = new CacheMarshaller($this->innerMock, $this->loggerMock);
     }
 
-    public function testMarshallSuccess(): void
+    public function testMarshall_withSmallData_noWarning(): void
     {
-        $values = ['key1' => 'value1', 'key2' => 123];
-        $marshalledValues = ['key1' => 'serialized_value1', 'key2' => 'serialized_123'];
+        $values = ['key1' => 'small_value', 'key2' => 'another_small_value'];
         $failed = [];
+        $expectedResult = ['key1' => 'marshalled_small', 'key2' => 'marshalled_small2'];
 
-        $this->innerMarshallerMock
+        $this->innerMock
             ->expects($this->once())
             ->method('marshall')
-            ->with($values, $this->anything()) // $failed is passed by reference
-            ->willReturn($marshalledValues);
+            ->with($values, $this->anything())
+            ->willReturn($expectedResult);
 
+        // 不应该记录警告
         $this->loggerMock
             ->expects($this->never())
             ->method('warning');
 
-        $result = $this->cacheMarshaller->marshall($values, $failed);
+        $result = $this->marshaller->marshall($values, $failed);
 
-        $this->assertSame($marshalledValues, $result);
+        $this->assertSame($expectedResult, $result);
     }
 
-    public function testMarshallLargeValueLogsWarning(): void
+    public function testMarshall_withLargeData_logsWarning(): void
     {
-        // 模拟环境变量，设置一个较小的阈值方便测试
-        $_ENV['CACHE_MARSHALLER_WARNING_VALUE_SIZE'] = 10;
-        $_ENV['CACHE_MARSHALLER_WARNING_DEMO_SIZE'] = 5;
-
-        $values = ['large_key' => 'this is a very large string'];
-        $marshalledValues = ['large_key' => 'serialized_large_string_more_than_10_chars'];
+        $largeValue = str_repeat('x', 2000000); // 2MB 数据
+        $values = ['large_key' => $largeValue];
         $failed = [];
+        $expectedResult = ['large_key' => $largeValue];
 
-        $this->innerMarshallerMock
+        $this->innerMock
             ->expects($this->once())
             ->method('marshall')
             ->with($values, $this->anything())
-            ->willReturn($marshalledValues);
+            ->willReturn($expectedResult);
+
+        // 应该记录警告
+        $this->loggerMock
+            ->expects($this->once())
+            ->method('warning')
+            ->with(
+                '发现一个数据比较大的缓存数据，请考虑拆分缓存',
+                $this->callback(function ($context) use ($largeValue) {
+                    return $context['key'] === 'large_key' &&
+                           $context['size'] === mb_strlen($largeValue) &&
+                           isset($context['demo']) &&
+                           mb_strlen($context['demo']) <= 400;
+                })
+            );
+
+        $result = $this->marshaller->marshall($values, $failed);
+
+        $this->assertSame($expectedResult, $result);
+    }
+
+    public function testMarshall_withCustomWarningSize_usesCustomSize(): void
+    {
+        // 设置自定义警告大小
+        $_ENV['CACHE_MARSHALLER_WARNING_VALUE_SIZE'] = 100;
+        $_ENV['CACHE_MARSHALLER_WARNING_DEMO_SIZE'] = 50;
+
+        $mediumValue = str_repeat('y', 150); // 150 字节，超过自定义限制
+        $values = ['medium_key' => $mediumValue];
+        $failed = [];
+        $expectedResult = ['medium_key' => $mediumValue];
+
+        $this->innerMock
+            ->expects($this->once())
+            ->method('marshall')
+            ->with($values, $this->anything())
+            ->willReturn($expectedResult);
 
         $this->loggerMock
             ->expects($this->once())
             ->method('warning')
             ->with(
                 '发现一个数据比较大的缓存数据，请考虑拆分缓存',
-                $this->callback(function ($context) use ($marshalledValues) {
-                    return isset($context['key']) && $context['key'] === 'large_key' &&
-                        isset($context['size']) && $context['size'] === mb_strlen($marshalledValues['large_key']) &&
-                        isset($context['demo']) && $context['demo'] === mb_substr($marshalledValues['large_key'], 0, 5);
+                $this->callback(function ($context) {
+                    return $context['key'] === 'medium_key' &&
+                           $context['size'] === 150 &&
+                           mb_strlen($context['demo']) === 50;
                 })
             );
 
-        $result = $this->cacheMarshaller->marshall($values, $failed);
+        $result = $this->marshaller->marshall($values, $failed);
 
-        $this->assertSame($marshalledValues, $result);
+        $this->assertSame($expectedResult, $result);
 
-        // 清理环境变量，避免影响其他测试
-        unset($_ENV['CACHE_MARSHALLER_WARNING_VALUE_SIZE'], $_ENV['CACHE_MARSHALLER_WARNING_DEMO_SIZE']);
+        // 清理环境变量
+        unset($_ENV['CACHE_MARSHALLER_WARNING_VALUE_SIZE']);
+        unset($_ENV['CACHE_MARSHALLER_WARNING_DEMO_SIZE']);
     }
 
-    public function testUnmarshall(): void
+    public function testMarshall_withMixedData_onlyWarnsForLargeData(): void
     {
-        $value = 'serialized_value';
-        $unmarshalledValue = 'unserialized_value';
+        $smallValue = 'small';
+        $largeValue = str_repeat('z', 2000000);
+        $values = [
+            'small_key' => $smallValue,
+            'large_key' => $largeValue,
+            'another_small' => 'also_small'
+        ];
+        $failed = [];
+        $expectedResult = [
+            'small_key' => $smallValue,
+            'large_key' => $largeValue,
+            'another_small' => 'also_small'
+        ];
 
-        $this->innerMarshallerMock
+        $this->innerMock
+            ->expects($this->once())
+            ->method('marshall')
+            ->with($values, $this->anything())
+            ->willReturn($expectedResult);
+
+        // 只应该为大数据记录一次警告
+        $this->loggerMock
+            ->expects($this->once())
+            ->method('warning')
+            ->with(
+                '发现一个数据比较大的缓存数据，请考虑拆分缓存',
+                $this->callback(function ($context) {
+                    return $context['key'] === 'large_key';
+                })
+            );
+
+        $result = $this->marshaller->marshall($values, $failed);
+
+        $this->assertSame($expectedResult, $result);
+    }
+
+    public function testUnmarshall_callsInnerUnmarshall(): void
+    {
+        $value = 'marshalled_data';
+        $expectedResult = ['unmarshalled' => 'data'];
+
+        $this->innerMock
             ->expects($this->once())
             ->method('unmarshall')
             ->with($value)
-            ->willReturn($unmarshalledValue);
+            ->willReturn($expectedResult);
 
-        $result = $this->cacheMarshaller->unmarshall($value);
+        $result = $this->marshaller->unmarshall($value);
 
-        $this->assertSame($unmarshalledValue, $result);
+        $this->assertSame($expectedResult, $result);
     }
 
-    public function testResetCallsInnerResetWhenPossible(): void
+    public function testReset_withResettableInner_callsInnerReset(): void
     {
-        // Case 1: Inner marshaller implements ResetInterface
-        /** @var MarshallerInterface&ResetInterface|MockObject $resettableInnerMock */
-        $resettableInnerMock = $this->createMock(ResettableMarshaller::class); // Dummy class implementing both
-        $resettableInnerMock->expects($this->once())->method('reset');
+        /** @var ResettableMarshallerMock&MockObject $resettableInner */
+        $resettableInner = $this->createMock(ResettableMarshallerMock::class);
+        $marshaller = new CacheMarshaller($resettableInner, $this->loggerMock);
 
-        $marshallerWithResettableInner = new CacheMarshaller($resettableInnerMock, $this->loggerMock);
-        $marshallerWithResettableInner->reset();
-        // Assertion is performed via expects() above
+        $resettableInner
+            ->expects($this->once())
+            ->method('reset');
+
+        $marshaller->reset();
     }
 
-    public function testResetDoesNotCallInnerResetWhenNotPossible(): void
+    public function testReset_withNonResettableInner_doesNothing(): void
     {
-        // Case 2: Inner marshaller does not implement ResetInterface
-        /** @var MarshallerInterface|MockObject $nonResettableInnerMock */
-        $nonResettableInnerMock = $this->createMock(MarshallerInterface::class);
-        // We expect reset *not* to be called, and no error to be thrown.
-        // Since expects($this->never()) can be tricky with mocks not having the method,
-        // we simply call reset and rely on PHPUnit to fail if an unexpected error occurs.
+        // 使用普通的 MarshallerInterface，不实现 ResetInterface
+        $this->marshaller->reset();
 
-        $marshallerWithNonResettableInner = new CacheMarshaller($nonResettableInnerMock, $this->loggerMock);
-        $marshallerWithNonResettableInner->reset();
-
-        $this->expectNotToPerformAssertions(); // Explicitly state no assertions are expected here
+        // 测试通过意味着没有异常抛出
+        $this->assertTrue(true);
     }
-}
 
-// Dummy interface/class for testing reset behaviour
-interface ResettableMarshaller extends MarshallerInterface, ResetInterface
-{
+    public function testMarshall_withEmptyValues_returnsEmpty(): void
+    {
+        $values = [];
+        $failed = [];
+        $expectedResult = [];
+
+        $this->innerMock
+            ->expects($this->once())
+            ->method('marshall')
+            ->with($values, $this->anything())
+            ->willReturn($expectedResult);
+
+        $this->loggerMock
+            ->expects($this->never())
+            ->method('warning');
+
+        $result = $this->marshaller->marshall($values, $failed);
+
+        $this->assertSame($expectedResult, $result);
+    }
 }
