@@ -24,7 +24,7 @@ class CacheHotKeyExtensionTest extends TestCase
         try {
             $this->extension->load($configs, $container);
             $this->assertTrue(true, 'Extension loaded successfully');
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             // 如果是文件不存在的错误，我们可以接受，因为这是测试环境的限制
             if (str_contains($e->getMessage(), 'services.yaml') || 
                 str_contains($e->getMessage(), 'FileLoader') ||
@@ -44,7 +44,7 @@ class CacheHotKeyExtensionTest extends TestCase
         try {
             $this->extension->load($configs, $container);
             $this->assertTrue(true);
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             if (str_contains($e->getMessage(), 'services.yaml') || 
                 str_contains($e->getMessage(), 'FileLoader') ||
                 str_contains($e->getMessage(), 'glob')) {
@@ -66,7 +66,7 @@ class CacheHotKeyExtensionTest extends TestCase
         try {
             $this->extension->load($configs, $container);
             $this->assertTrue(true);
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             if (str_contains($e->getMessage(), 'services.yaml') || 
                 str_contains($e->getMessage(), 'FileLoader') ||
                 str_contains($e->getMessage(), 'glob')) {
