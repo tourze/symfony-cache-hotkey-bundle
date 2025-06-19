@@ -170,7 +170,7 @@ class HotkeySmartCache implements AdapterInterface, CacheInterface, TagAwareCach
         }
 
         if ($this->decorated instanceof TagAwareCacheInterface) {
-            if ($_ENV['CACHE_INVALIDATE_TAG_LOG'] ?? false) {
+            if (($_ENV['CACHE_INVALIDATE_TAG_LOG'] ?? false) === 'true' || ($_ENV['CACHE_INVALIDATE_TAG_LOG'] ?? false) === '1') {
                 $this->logger->debug('清空标签关联缓存', [
                     'tags' => $tags,
                     'backtrace' => Backtrace::create()->toString(),

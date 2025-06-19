@@ -56,7 +56,7 @@ class HotkeyTagOperationsTest extends TestCase
         $loggerMock = $this->createMock(LoggerInterface::class);
 
         // 启用日志记录
-        $_ENV['CACHE_INVALIDATE_TAG_LOG'] = true;
+        $_ENV['CACHE_INVALIDATE_TAG_LOG'] = 'true';
 
         $tags = ['tag1', 'tag2'];
 
