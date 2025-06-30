@@ -6,12 +6,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Marshaller\MarshallerInterface;
-use Symfony\Contracts\Service\ResetInterface;
+use Tourze\Symfony\CacheHotKey\Tests\Mock\ResettableMarshallerInterface;
 use Tourze\Symfony\CacheHotKey\Service\CacheMarshaller;
-
-interface ResettableMarshallerMock extends MarshallerInterface, ResetInterface
-{
-}
 
 class CacheMarshallerTest extends TestCase
 {
@@ -178,8 +174,8 @@ class CacheMarshallerTest extends TestCase
 
     public function testReset_withResettableInner_callsInnerReset(): void
     {
-        /** @var ResettableMarshallerMock&MockObject $resettableInner */
-        $resettableInner = $this->createMock(ResettableMarshallerMock::class);
+        /** @var ResettableMarshallerInterface&MockObject $resettableInner */
+        $resettableInner = $this->createMock(ResettableMarshallerInterface::class);
         $marshaller = new CacheMarshaller($resettableInner, $this->loggerMock);
 
         $resettableInner

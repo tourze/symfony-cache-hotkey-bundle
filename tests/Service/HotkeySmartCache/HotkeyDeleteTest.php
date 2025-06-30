@@ -5,17 +5,12 @@ namespace Tourze\Symfony\CacheHotKey\Tests\Service\HotkeySmartCache;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Cache\Adapter\AdapterInterface;
-use Symfony\Contracts\Cache\CacheInterface;
+use Tourze\Symfony\CacheHotKey\Tests\Mock\CacheAdapterInterface;
 use Tourze\Symfony\CacheHotKey\Service\HotkeySmartCache;
-
-interface CacheAdapterMock extends AdapterInterface, CacheInterface
-{
-}
 
 class HotkeyDeleteTest extends TestCase
 {
-    /** @var CacheAdapterMock&MockObject */
+    /** @var CacheAdapterInterface&MockObject */
     private $decoratedMock;
 
     /** @var LoggerInterface&MockObject */
@@ -25,7 +20,7 @@ class HotkeyDeleteTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->decoratedMock = $this->createMock(CacheAdapterMock::class);
+        $this->decoratedMock = $this->createMock(CacheAdapterInterface::class);
         $this->loggerMock = $this->createMock(LoggerInterface::class);
         $this->cache = new HotkeySmartCache($this->decoratedMock, $this->loggerMock);
     }

@@ -5,27 +5,16 @@ namespace Tourze\Symfony\CacheHotKey\Tests\Service\HotkeySmartCache;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Cache\Adapter\AdapterInterface;
-use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
-use Symfony\Contracts\Cache\CacheInterface;
-use Symfony\Contracts\Cache\TagAwareCacheInterface;
-use Symfony\Contracts\Service\ResetInterface;
+use Tourze\Symfony\CacheHotKey\Tests\Mock\TagAwareCacheAdapterInterface;
+use Tourze\Symfony\CacheHotKey\Tests\Mock\ResettableCacheAdapterInterface;
 use Tourze\Symfony\CacheHotKey\Service\HotkeySmartCache;
-
-interface TagAwareCacheMock extends AdapterInterface, CacheInterface, TagAwareCacheInterface, TagAwareAdapterInterface, ResetInterface
-{
-}
-
-interface NonTagAwareCacheMock extends AdapterInterface, CacheInterface, ResetInterface
-{
-}
 
 class HotkeyTagOperationsTest extends TestCase
 {
     public function testInvalidateTags_withTagAwareCache_succeeds(): void
     {
-        /** @var TagAwareCacheMock&MockObject $decoratedMock */
-        $decoratedMock = $this->createMock(TagAwareCacheMock::class);
+        /** @var TagAwareCacheAdapterInterface&MockObject $decoratedMock */
+        $decoratedMock = $this->createMock(TagAwareCacheAdapterInterface::class);
         /** @var LoggerInterface&MockObject $loggerMock */
         $loggerMock = $this->createMock(LoggerInterface::class);
 
@@ -50,8 +39,8 @@ class HotkeyTagOperationsTest extends TestCase
 
     public function testInvalidateTags_withTagAwareCacheAndLoggingEnabled_logsDebug(): void
     {
-        /** @var TagAwareCacheMock&MockObject $decoratedMock */
-        $decoratedMock = $this->createMock(TagAwareCacheMock::class);
+        /** @var TagAwareCacheAdapterInterface&MockObject $decoratedMock */
+        $decoratedMock = $this->createMock(TagAwareCacheAdapterInterface::class);
         /** @var LoggerInterface&MockObject $loggerMock */
         $loggerMock = $this->createMock(LoggerInterface::class);
 
@@ -89,8 +78,8 @@ class HotkeyTagOperationsTest extends TestCase
 
     public function testInvalidateTags_withTagAwareCacheAndLoggingEnabledAsString_logsDebug(): void
     {
-        /** @var TagAwareCacheMock&MockObject $decoratedMock */
-        $decoratedMock = $this->createMock(TagAwareCacheMock::class);
+        /** @var TagAwareCacheAdapterInterface&MockObject $decoratedMock */
+        $decoratedMock = $this->createMock(TagAwareCacheAdapterInterface::class);
         /** @var LoggerInterface&MockObject $loggerMock */
         $loggerMock = $this->createMock(LoggerInterface::class);
 
@@ -120,8 +109,8 @@ class HotkeyTagOperationsTest extends TestCase
 
     public function testInvalidateTags_withNonTagAwareCache_logsWarningAndReturnsFalse(): void
     {
-        /** @var NonTagAwareCacheMock&MockObject $decoratedMock */
-        $decoratedMock = $this->createMock(NonTagAwareCacheMock::class);
+        /** @var ResettableCacheAdapterInterface&MockObject $decoratedMock */
+        $decoratedMock = $this->createMock(ResettableCacheAdapterInterface::class);
         /** @var LoggerInterface&MockObject $loggerMock */
         $loggerMock = $this->createMock(LoggerInterface::class);
 
@@ -144,8 +133,8 @@ class HotkeyTagOperationsTest extends TestCase
 
     public function testInvalidateTags_withEmptyTags_returnsFalse(): void
     {
-        /** @var TagAwareCacheMock&MockObject $decoratedMock */
-        $decoratedMock = $this->createMock(TagAwareCacheMock::class);
+        /** @var TagAwareCacheAdapterInterface&MockObject $decoratedMock */
+        $decoratedMock = $this->createMock(TagAwareCacheAdapterInterface::class);
         /** @var LoggerInterface&MockObject $loggerMock */
         $loggerMock = $this->createMock(LoggerInterface::class);
 
@@ -172,8 +161,8 @@ class HotkeyTagOperationsTest extends TestCase
 
     public function testInvalidateTags_withSingleTag_works(): void
     {
-        /** @var TagAwareCacheMock&MockObject $decoratedMock */
-        $decoratedMock = $this->createMock(TagAwareCacheMock::class);
+        /** @var TagAwareCacheAdapterInterface&MockObject $decoratedMock */
+        $decoratedMock = $this->createMock(TagAwareCacheAdapterInterface::class);
         /** @var LoggerInterface&MockObject $loggerMock */
         $loggerMock = $this->createMock(LoggerInterface::class);
 
@@ -193,8 +182,8 @@ class HotkeyTagOperationsTest extends TestCase
 
     public function testInvalidateTags_withManyTags_works(): void
     {
-        /** @var TagAwareCacheMock&MockObject $decoratedMock */
-        $decoratedMock = $this->createMock(TagAwareCacheMock::class);
+        /** @var TagAwareCacheAdapterInterface&MockObject $decoratedMock */
+        $decoratedMock = $this->createMock(TagAwareCacheAdapterInterface::class);
         /** @var LoggerInterface&MockObject $loggerMock */
         $loggerMock = $this->createMock(LoggerInterface::class);
 
@@ -214,8 +203,8 @@ class HotkeyTagOperationsTest extends TestCase
 
     public function testInvalidateTags_withSpecialTagNames_works(): void
     {
-        /** @var TagAwareCacheMock&MockObject $decoratedMock */
-        $decoratedMock = $this->createMock(TagAwareCacheMock::class);
+        /** @var TagAwareCacheAdapterInterface&MockObject $decoratedMock */
+        $decoratedMock = $this->createMock(TagAwareCacheAdapterInterface::class);
         /** @var LoggerInterface&MockObject $loggerMock */
         $loggerMock = $this->createMock(LoggerInterface::class);
 
@@ -235,8 +224,8 @@ class HotkeyTagOperationsTest extends TestCase
 
     public function testReset_withResettableCache_callsReset(): void
     {
-        /** @var TagAwareCacheMock&MockObject $decoratedMock */
-        $decoratedMock = $this->createMock(TagAwareCacheMock::class);
+        /** @var TagAwareCacheAdapterInterface&MockObject $decoratedMock */
+        $decoratedMock = $this->createMock(TagAwareCacheAdapterInterface::class);
         /** @var LoggerInterface&MockObject $loggerMock */
         $loggerMock = $this->createMock(LoggerInterface::class);
 
@@ -250,8 +239,8 @@ class HotkeyTagOperationsTest extends TestCase
 
     public function testReset_withNonResettableCache_doesNothing(): void
     {
-        /** @var NonTagAwareCacheMock&MockObject $decoratedMock */
-        $decoratedMock = $this->createMock(NonTagAwareCacheMock::class);
+        /** @var ResettableCacheAdapterInterface&MockObject $decoratedMock */
+        $decoratedMock = $this->createMock(ResettableCacheAdapterInterface::class);
         /** @var LoggerInterface&MockObject $loggerMock */
         $loggerMock = $this->createMock(LoggerInterface::class);
 
