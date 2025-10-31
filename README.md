@@ -1,6 +1,18 @@
 # Symfony Cache HotKey Bundle
 
-A Symfony Bundle designed to solve cache hotkey issues by automatically distributing hot keys across multiple sub-keys, effectively preventing a single cache node from being overloaded.
+[![PHP Version](https://img.shields.io/badge/PHP-%3E%3D8.1-blue.svg)](https://www.php.net/)  
+[![Symfony Version](https://img.shields.io/badge/Symfony-%3E%3D6.4-green.svg)](https://symfony.com/)  
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)  
+[![Build Status](https://github.com/tourze/php-monorepo/workflows/CI/badge.svg)]
+(https://github.com/tourze/php-monorepo/actions)  
+[![Coverage Status](https://coveralls.io/repos/github/tourze/php-monorepo/badge.svg?branch=master)]
+(https://coveralls.io/github/tourze/php-monorepo?branch=master)
+
+[English](README.md) | [中文](README.zh-CN.md)
+
+A Symfony Bundle designed to solve cache hotkey issues by automatically 
+distributing hot keys across multiple sub-keys, effectively preventing 
+a single cache node from being overloaded.
 
 ---
 
@@ -20,12 +32,22 @@ A Symfony Bundle designed to solve cache hotkey issues by automatically distribu
 - PSR-3 Logger
 - Symfony Cache component
 
-### Composer Install
+### Using Composer
 ```bash
 composer require tourze/symfony-cache-hotkey-bundle
 ```
 
 ## Quick Start
+
+### Bundle Registration
+Add the bundle to your `config/bundles.php`:
+
+```php
+return [
+    // ... other bundles
+    Tourze\Symfony\CacheHotKey\CacheHotKeyBundle::class => ['all' => true],
+];
+```
 
 ### Marking a Hot Key
 Simply add the `hotkey_` prefix to your cache key:
@@ -43,6 +65,8 @@ This bundle will automatically:
 2. Randomly select a sub-key when reading
 3. Clean up all sub-keys when the main key is deleted
 
+## Configuration
+
 ### Main Configuration (Environment Variables)
 ```dotenv
 CACHE_MARSHALLER_WARNING_VALUE_SIZE=1048576 # Cache serialization warning threshold (bytes)
@@ -50,13 +74,13 @@ CACHE_MARSHALLER_WARNING_DEMO_SIZE=400      # Cache content preview size (bytes)
 CACHE_INVALIDATE_TAG_LOG=false              # Enable cache tag invalidation logging
 ```
 
-## Documentation
+## Advanced Usage
 
+### Cache Tag Invalidation
 - Supports cache tag invalidation with optional logging (`CACHE_INVALIDATE_TAG_LOG`)
 - Automatically logs a warning if cache value size exceeds threshold, helping you optimize data structures
 
-## Performance Tips
-
+### Performance Tips
 - For high concurrency scenarios, only use the `hotkey_` prefix for truly hot data to avoid unnecessary sharding
 - You can customize the number of shards by adjusting the `MAX_KEY` constant
 
@@ -71,19 +95,3 @@ MIT License © Tourze
 ## Changelog
 
 See [Releases](https://github.com/tourze/symfony-cache-hotkey-bundle/releases) for details
-
-This Bundle will automatically:
-1. Replicate hot key content across 10 sub-keys (from hotkey_popular_data_0_split to hotkey_popular_data_9_split)
-2. Randomly select a sub-key when reading
-3. Clean up all sub-keys when the main key is deleted
-
-## 要求 | Requirements
-
-- PHP 8.1+
-- Symfony 6.4+
-- PSR-3 Logger
-- Symfony Cache Component
-
-## License
-
-MIT License

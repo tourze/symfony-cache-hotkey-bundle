@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\Symfony\CacheHotKey\Service;
 
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Marshaller\MarshallerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
@@ -12,6 +15,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * 单次记录的缓存数据，如果太多的话可能会造成redis进程阻塞，为此我们加一个数据去判断下大小
  */
 #[AsDecorator(decorates: 'cache.default_marshaller')]
+#[WithMonologChannel(channel: 'cache_hot_key')]
 class CacheMarshaller implements MarshallerInterface, ResetInterface
 {
     public function __construct(
@@ -20,12 +24,22 @@ class CacheMarshaller implements MarshallerInterface, ResetInterface
     ) {
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @phpstan-ignore-next-line missingType.iterableValue
+     */
     public function marshall(array $values, ?array &$failed): array
     {
-        $maxSize = $_ENV['CACHE_MARSHALLER_WARNING_VALUE_SIZE'] ?? 1048576;
-        $demoSize = $_ENV['CACHE_MARSHALLER_WARNING_DEMO_SIZE'] ?? 400;
+        $maxSizeEnv = $_ENV['CACHE_MARSHALLER_WARNING_VALUE_SIZE'] ?? '1048576';
+        $demoSizeEnv = $_ENV['CACHE_MARSHALLER_WARNING_DEMO_SIZE'] ?? '400';
+        $maxSize = is_numeric($maxSizeEnv) ? (int) $maxSizeEnv : 1048576;
+        $demoSize = is_numeric($demoSizeEnv) ? (int) $demoSizeEnv : 400;
         $result = $this->inner->marshall($values, $failed);
         foreach ($result as $k => $v) {
+            if (!is_string($v)) {
+                continue;
+            }
             if (mb_strlen($v) > $maxSize) {
                 $this->logger->warning('发现一个数据比较大的缓存数据，请考虑拆分缓存', [
                     'key' => $k,
@@ -35,6 +49,7 @@ class CacheMarshaller implements MarshallerInterface, ResetInterface
             }
         }
 
+        /** @var array<string, string> $result */
         return $result;
     }
 
