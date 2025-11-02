@@ -16,19 +16,14 @@ use Symfony\Contracts\Service\ResetInterface;
  */
 #[AsDecorator(decorates: 'cache.default_marshaller')]
 #[WithMonologChannel(channel: 'cache_hot_key')]
-class CacheMarshaller implements MarshallerInterface, ResetInterface
+readonly class CacheMarshaller implements MarshallerInterface, ResetInterface
 {
     public function __construct(
-        #[AutowireDecorated] private readonly MarshallerInterface $inner,
-        private readonly LoggerInterface $logger,
+        #[AutowireDecorated] private MarshallerInterface $inner,
+        private LoggerInterface $logger,
     ) {
     }
 
-    /**
-     * {@inheritdoc}
-     *
-     * @phpstan-ignore-next-line missingType.iterableValue
-     */
     public function marshall(array $values, ?array &$failed): array
     {
         $maxSizeEnv = $_ENV['CACHE_MARSHALLER_WARNING_VALUE_SIZE'] ?? '1048576';
