@@ -4,7 +4,7 @@ namespace Tourze\Symfony\CacheHotKey\DependencyInjection;
 
 use Tourze\SymfonyDependencyServiceLoader\AutoExtension;
 
-class CacheHotKeyExtension extends AutoExtension
+final class CacheHotKeyExtension extends AutoExtension
 {
     protected function getConfigDir(): string
     {
